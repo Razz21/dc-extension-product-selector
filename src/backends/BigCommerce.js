@@ -1,35 +1,22 @@
-import Sdk from 'node-bigcommerce'
 import {ProductSelectorError} from '../ProductSelectorError';
 import qs from 'qs';
 
 export class BigCommerce {
   constructor({
-    logLevel,
-    clientId,
-    secret,
-    callback,
-    responseType,
-    headers,
-    apiVersion
+    storeHash,
+    accessToken,
+    apiVersion='v3'
   }) {
-    const defaults = {
-      logLevel: 'info',
-      responseType: 'json',
-      headers: { 'Accept-Encoding': '*' }, // Override headers (Overriding the default encoding of GZipped is useful in development)
-      apiVersion: 'v3' // Default is v2
-    }
-    const sdkOptions = {
-      ...defaults,
-      logLevel,
-      clientId,
-      secret,
-      callback,
-      responseType,
-      headers,
-      apiVersion
-    }
-    this.bigCommerce = new Sdk(sdkOptions);
-    this.PRODUCTS_ENDPOINT = '/catalog/products';
+
+    this.apiUrl = `/bigcommerce/stores/${storeHash}/${apiVersion}/catalog/products`;
+    this.accessToken = accessToken
+  }
+
+  getHeaders() {
+    return {
+      'X-Auth-Token': this.accessToken,
+      "Content-Type": "application/json"
+    };
   }
 
   async getItems(state, filterIds = []) {
@@ -49,10 +36,17 @@ export class BigCommerce {
           'id:in': idsStrings
         }
       );
+      const params = {
+        method: 'GET',
+        headers: {
+          ...this.getHeaders(),
+        }
+      };
 
-      const response = await this.bigCommerce.get(this.PRODUCTS_ENDPOINT + '?' + queryString)
+      const response = await fetch(`${this.apiUrl}?${queryString}`, params);
+      const {data} = await response.json();
 
-      return this.parseResults(response.data);
+      return this.parseResults(data);
 
     } catch (e) {
       console.error(e);
@@ -61,7 +55,7 @@ export class BigCommerce {
   }
 
   getImage({ primary_image = {} }) {
-    return primary_image.standard_url || '';
+    return primary_image.url_standard || '';
   }
 
   parseResults(data) {
@@ -90,13 +84,21 @@ export class BigCommerce {
             page: page.curPage,
           }
         );
+      const params = {
+        method: 'GET',
+        headers: {
+          ...this.getHeaders()
+        }
+      };
 
-      const response = await this.bigCommerce.get(this.PRODUCTS_ENDPOINT + '?' + queryString);
-      const total = response.meta.pagination.total
+      const response = await fetch(`${this.apiUrl}?${queryString}`, params);
+
+      const { data, meta } = await response.json();
+      const total = meta.pagination.total
       return {
-        items: this.parseResults(response.data),
+        items: this.parseResults(data),
         page: {
-          numPages: response.meta.pagination.total_pages,
+          numPages: meta.pagination.total_pages,
           curPage: page.curPage,
           total
         }
@@ -108,6 +110,6 @@ export class BigCommerce {
   }
 
   exportItem(item) {
-    return item.id;
+    return String(item.id);
   }
 }
