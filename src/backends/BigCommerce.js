@@ -1,52 +1,51 @@
-import {ProductSelectorError} from '../ProductSelectorError';
+import { ProductSelectorError } from '../ProductSelectorError';
 import qs from 'qs';
-
+import { trimEnd } from 'lodash';
 export class BigCommerce {
   constructor({
     storeHash,
     accessToken,
-    apiVersion='v3'
+    apiVersion = 'v3',
+    proxyUrl
   }) {
-
-    this.apiUrl = `/bigcommerce/stores/${storeHash}/${apiVersion}/catalog/products`;
-    this.accessToken = accessToken
+    this.settings = { storeHash, accessToken, apiVersion, proxyUrl };
   }
 
-  getHeaders() {
+  getHeaders(state) {
+    const {
+      params: { accessToken, storeHash, apiVersion }
+    } = state;
     return {
-      'X-Auth-Token': this.accessToken,
-      "Content-Type": "application/json"
+      'X-Auth-Token': accessToken,
+      "Content-Type": "application/json",
+      "store-hash": storeHash,
+      "api-version": apiVersion
     };
   }
 
   async getItems(state, filterIds = []) {
     const {
       PAGE_SIZE,
+      proxyUrl
     } = state;
     try {
-      if (!filterIds.length){
+      if (!filterIds.length) {
         return [];
       }
-      const idsStrings = filterIds.join(',');
+      const ids = filterIds.join(',');
 
-      const queryString = qs.stringify(
-        {
-          include:"primary_image",
-          limit: PAGE_SIZE,
-          'id:in': idsStrings
-        }
-      );
+      const queryString = qs.stringify({ ids });
       const params = {
         method: 'GET',
         headers: {
-          ...this.getHeaders(),
+          ...this.getHeaders(state),
         }
       };
 
-      const response = await fetch(`${this.apiUrl}?${queryString}`, params);
-      const {data} = await response.json();
+      const response = await fetch(`${trimEnd(proxyUrl, '/')}/api/products?${queryString}`, params);
+      const { items } = await response.json();
 
-      return this.parseResults(data);
+      return items;
 
     } catch (e) {
       console.error(e);
@@ -54,55 +53,31 @@ export class BigCommerce {
     }
   }
 
-  getImage({ primary_image = {} }) {
-    return primary_image.url_standard || '';
-  }
-
-  parseResults(data) {
-    return data.map((item) => {
-      return {
-        id: item.id,
-        name: item.name,
-        image: this.getImage(item)
-      }
-    })
-  }
-
   async search(state) {
     const {
       searchText,
       page,
       PAGE_SIZE,
+      params: { proxyUrl }
     } = state;
-
+    const emptyResult = { items: [], page: { numPages: 0, curPage: 0, total: 0 } };
     try {
-      const queryString = qs.stringify(
-          {
-            'keyword:like': searchText,
-            include: "primary_image",
-            limit: PAGE_SIZE,
-            page: page.curPage,
-          }
-        );
+      const body = {
+        search_text: searchText,
+        limit: PAGE_SIZE,
+        page: page.curPage,
+      };
       const params = {
-        method: 'GET',
+        method: 'POST',
+        body: JSON.stringify(body),
         headers: {
           ...this.getHeaders()
         }
       };
 
-      const response = await fetch(`${this.apiUrl}?${queryString}`, params);
+      const response = await fetch(`${trimEnd(proxyUrl, '/')}/api/product-search`, params);
 
-      const { data, meta } = await response.json();
-      const total = meta.pagination.total
-      return {
-        items: this.parseResults(data),
-        page: {
-          numPages: meta.pagination.total_pages,
-          curPage: page.curPage,
-          total
-        }
-      };
+      return response.json() || emptyResult;
     } catch (e) {
       console.error(e);
       throw new ProductSelectorError('Could not search', ProductSelectorError.codes.GET_ITEMS);
