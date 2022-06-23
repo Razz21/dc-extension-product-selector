@@ -13,9 +13,7 @@ export class BigCommerce {
   }
 
   getHeaders(state) {
-    const {
-      params: { accessToken, storeHash, apiVersion }
-    } = state;
+    const { accessToken, storeHash, apiVersion } = state
     return {
       'X-Auth-Token': accessToken,
       "Content-Type": "application/json",
@@ -24,10 +22,8 @@ export class BigCommerce {
     };
   }
 
-  async getItems(state, filterIds = []) {
-    const {
-      proxyUrl
-    } = state;
+  async getItems(_, filterIds = []) {
+    const { proxyUrl, ...state } = this.settings;
     try {
       if (!filterIds.length) {
         return [];
@@ -58,8 +54,8 @@ export class BigCommerce {
       searchText,
       page,
       PAGE_SIZE,
-      params: { proxyUrl }
     } = state;
+    const { proxyUrl } = this.settings;
     const emptyResult = { items: [], page: { numPages: 0, curPage: 0, total: 0 } };
     try {
       const body = {
