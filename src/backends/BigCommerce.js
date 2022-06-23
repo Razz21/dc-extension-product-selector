@@ -26,7 +26,6 @@ export class BigCommerce {
 
   async getItems(state, filterIds = []) {
     const {
-      PAGE_SIZE,
       proxyUrl
     } = state;
     try {
