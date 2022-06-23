@@ -55,7 +55,7 @@ export class BigCommerce {
       page,
       PAGE_SIZE,
     } = state;
-    const { proxyUrl } = this.settings;
+    const { proxyUrl, ...settings } = this.settings;
     const emptyResult = { items: [], page: { numPages: 0, curPage: 0, total: 0 } };
     try {
       const body = {
@@ -67,7 +67,7 @@ export class BigCommerce {
         method: 'POST',
         body: JSON.stringify(body),
         headers: {
-          ...this.getHeaders()
+          ...this.getHeaders(settings)
         }
       };
 
