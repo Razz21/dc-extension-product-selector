@@ -1,6 +1,7 @@
 import { ProductSelectorError } from '../ProductSelectorError';
 import qs from 'qs';
 import { trimEnd } from 'lodash';
+
 export class BigCommerce {
   constructor({
     storeHash,
