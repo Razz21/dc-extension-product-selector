@@ -68,7 +68,6 @@ export class BigCommerce {
         body: JSON.stringify(body),
         headers: {
           ...this.getHeaders(settings),
-          "Content-Type": "text/plain",
         }
       };
 
