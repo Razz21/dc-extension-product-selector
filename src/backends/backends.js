@@ -1,7 +1,8 @@
-import {SFCC} from './SFCC';
-import {SFCCCors} from './SFCCCors';
-import {Hybris} from './Hybris';
-import {CommerceTools} from './CommerceTools';
+import { SFCC } from './SFCC';
+import { SFCCCors } from './SFCCCors';
+import { Hybris } from './Hybris';
+import { CommerceTools } from './CommerceTools';
+import { KiboCommerce } from './KiboCommerce';
 import {BigCommerce} from './BigCommerce';
 
 export const backends = {
@@ -9,6 +10,7 @@ export const backends = {
   SFCCCORS: 'sfcc-cors',
   HYBRIS: 'hybris',
   COMMERCETOOLS: 'commercetools',
+  KIBOCOMMERCE: 'kibocommerce',
   BIGCOMMERCE: 'bigcommerce'
 };
 
@@ -18,6 +20,8 @@ export const getBackend = (params) => {
       return new Hybris(params);
     case backends.COMMERCETOOLS:
       return new CommerceTools(params);
+    case backends.KIBOCOMMERCE:
+      return new KiboCommerce(params);
     case backends.SFCCCORS:
       return new SFCCCors(params);
     case backends.BIGCOMMERCE:
@@ -26,4 +30,4 @@ export const getBackend = (params) => {
     default:
       return new SFCC(params);
   }
-}
+};
