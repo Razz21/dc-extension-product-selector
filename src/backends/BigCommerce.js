@@ -67,7 +67,8 @@ export class BigCommerce {
         method: 'POST',
         body: JSON.stringify(body),
         headers: {
-          ...this.getHeaders(settings)
+          ...this.getHeaders(settings),
+          "Content-Type": "text/plain",
         }
       };
 
