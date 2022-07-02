@@ -71,7 +71,7 @@ export class BigCommerce {
         }
       };
 
-      const response = await fetch(`${trimEnd(proxyUrl, '/')}/api/product-search/`, params);
+      const response = await fetch(`${trimEnd(proxyUrl, '/')}/api/product-search`, params);
 
       return response.json() || emptyResult;
     } catch (e) {
